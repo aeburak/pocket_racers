@@ -75,12 +75,30 @@ def output_result(dot_count):
 bdp_white = cv2.SimpleBlobDetector_Params()
 ''' UPDATE THESE PARAMETERS FOR YOUR WHITE DIE BLOB DETECTION '''
 bdp_white.filterByColor = False
-
+bdp_white.filterByArea = False
+bdp_white.filterByConvexity = False
+bdp_white.filterByCircularity = True
+bdp_white.filterByInertia = False
+bdp_white.filterByColor = True
+bdp_white.blobColor = 255
+bdp_white.minCircularity = 0.5
+bdp_white.maxCircularity = 1
 detector_white = cv2.SimpleBlobDetector_create(bdp_white)
 
 def white_dice(img):
-    ''' YOUR FILTERS GO HERE '''
-    return 0
+    new_dims = (int(img.shape[1] * 0.4), int(img.shape[0] * 0.4))
+    downscale = cv2.resize(img, new_dims)
+    greyscale = cv2.cvtColor(downscale, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(greyscale,ksize=(5,5),sigmaX=0)
+    #threshold = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,55,50)
+    #threshold = cv2.threshold(blur,127,255,cv2.THRESH_BINARY)
+    #mask = cv2.inRange(blur, (135, 0, 0), (180, 255, 255))
+    threshold = cv2.adaptiveThreshold(blur,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,55,50)
+    erode = cv2.erode(threshold, np.ones((3,3), np.uint8), iterations=1)
+    dilate = cv2.dilate(erode, np.ones((3,3), np.uint8), iterations=1)
+    points = detector_white.detect(dilate)
+    cv2.imshow("Capture", dilate)
+    return points
 
 bdp_color = cv2.SimpleBlobDetector_Params()
 ''' UPDATE THESE PARAMETERS FOR YOUR COLORED DICE BLOB DETECTION '''
@@ -105,6 +123,7 @@ try:
 
         ''' WHITE DIE '''
         points = white_dice(img)
+        #print(points)
 
         ''' COLORED DICE '''
         # points = colored_dice(img)
@@ -113,7 +132,7 @@ try:
         # Test your filters by adding them directly to this while loop
         # (or creating a new function), then uncommenting the line below:
         
-        cv2.imshow("Capture", img)
+        #cv2.imshow("Capture", img)
  
         # Uncomment these two lines when getting checked off.
 
